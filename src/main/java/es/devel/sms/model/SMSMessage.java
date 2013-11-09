@@ -23,9 +23,6 @@ public class SMSMessage extends Object implements Serializable {
     private static final long serialVersionUID = -1659659381319540529L;
     private String messageText;
 
-    public SMSMessage() {
-    }
-
     public SMSMessage(String messageText) {
         this.messageText = messageText;
     }
@@ -34,8 +31,12 @@ public class SMSMessage extends Object implements Serializable {
         return messageText;
     }
 
-    public void setMessageText(String messageText) {
-        this.messageText = messageText;
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("SMSMessage{");
+        sb.append("messageText='").append(messageText).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 
 }
