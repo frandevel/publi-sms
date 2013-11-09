@@ -2,18 +2,25 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>es.devel.</groupId>
     <artifactId>sms</artifactId>
-    <version>0.5-SNAPSHOT</version>
+    <version>0.6-SNAPSHOT</version>
 
     <packaging>jar</packaging>
 
+    <organization>
+        <name>Fran Serrano</name>
+        <url>http://www.about.me/franserrano</url>
+    </organization>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <httpclient.version>3.1</httpclient.version>
+        <slf4j.version>1.7.5</slf4j.version>
     </properties>
 
     <scm>
-
-        <developerConnection>scm:git:ssh://git@bitbucket.org:frandevel/sms.git</developerConnection>
         <connection>scm:git:ssh://git@bitbucket.org:frandevel/sms.git</connection>
+        <developerConnection>scm:git:ssh://git@bitbucket.org:frandevel/sms.git</developerConnection>
+        <url>https://bitbucket.org/frandevel/sms.git</url>
     </scm>
 
     <build>
@@ -36,33 +43,27 @@
         <dependency>
             <groupId>commons-httpclient</groupId>
             <artifactId>commons-httpclient</artifactId>
-            <version>3.1</version>
+            <version>${httpclient.version}</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.16</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
-            <version>1.6.1</version>
+            <version>${slf4j.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.6.1</version>
+            <version>${slf4j.version}</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.9</version>
+            <version>4.11</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
