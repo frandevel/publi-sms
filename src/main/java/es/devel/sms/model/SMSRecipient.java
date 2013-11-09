@@ -35,16 +35,16 @@ public class SMSRecipient implements Serializable {
         return mobileNumber;
     }
 
-    public void setMobileNumber(String mobileNumber) {
-        this.mobileNumber = mobileNumber;
-    }
-
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("SMSRecipient{");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", mobileNumber='").append(mobileNumber).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
-
 }
