@@ -42,8 +42,8 @@ public class SMSServiceImpl implements SmsService {
     private static final String PASSWORD_PARAM_NAME = "PWD";
     private static final String ROUTE_DEFAULT_VALUE = "2";
     private static final String ROUTE_PARAM_NAME = "R";
-    private static final String SMS_GATEWAY_URL = "http://sms1.gateway360.com/api/push/";
-    private static final String SMS_CREDIT_CHECK_URL = "http://www.smspubli.com/api/others/get_credits.php";
+    private static final String SMS_GATEWAY_URL = "http://api.gateway360.com/api/push/";
+    private static final String SMS_CREDIT_CHECK_URL = "http://api.gateway360.com/api/others/get_credits.php";
     private static final String STATUS_NO_CREDITS_LEFT = "OK:-5";
     private static final String USERNAME_PARAM_NAME = "UN";
     private static final String VERSION_PARAM_NAME = "V";
@@ -128,29 +128,29 @@ public class SMSServiceImpl implements SmsService {
         }
     }
 
-    public void sendSms(String messageArg, String... recipientArg) throws SMSServiceException, SmsGatewayNotConfiguredException, InvalidSmsRecipentDataException {
+    public void sendSms(String messageText, String... recipientMobileNumbers) throws SMSServiceException, SmsGatewayNotConfiguredException, InvalidSmsRecipentDataException {
 
         validateSmsGatewayConfiguration();
 
-        if (recipientArg.length == 0) {
+        if (recipientMobileNumbers.length == 0) {
             throw new InvalidSmsRecipentDataException("No se ha especificado ningún destinatario del mensaje SMS");
         }
 
-        if (messageArg.equalsIgnoreCase("")) {
+        if (messageText.equalsIgnoreCase("")) {
             throw new SMSServiceException("El texto del mensaje está vacío");
         }
 
-        SMSMessage message = new SMSMessage(messageArg);
+        SMSMessage message = new SMSMessage(messageText);
 
         List<SMSMessage> messages = new ArrayList<SMSMessage>(1);
         List<SMSRecipient> recipients = new ArrayList<SMSRecipient>(1);
 
-        for (String s : recipientArg) {
+        for (String s : recipientMobileNumbers) {
             SMSRecipient recipient = new SMSRecipient("", s);
             recipients.add(recipient);
         }
-
         messages.add(message);
+
         sendSms(messages, recipients);
     }
 
