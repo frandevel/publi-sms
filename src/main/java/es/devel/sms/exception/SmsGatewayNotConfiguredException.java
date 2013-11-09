@@ -18,9 +18,6 @@ package es.devel.sms.exception;
 
 public class SmsGatewayNotConfiguredException extends Exception {
 
-    public SmsGatewayNotConfiguredException() {
-    }
-
     public SmsGatewayNotConfiguredException(String message) {
         super(message);
     }
