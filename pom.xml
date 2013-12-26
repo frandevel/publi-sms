@@ -69,4 +69,17 @@
         </dependency>
     </dependencies>
 
+    <distributionManagement>
+        <repository>
+            <id>nexus</id>
+            <name>RepositoryProxy</name>
+            <url>http://nexus.devel.es/content/repositories/devel/</url>
+        </repository>
+        <snapshotRepository>
+            <id>nexus</id>
+            <name>Devel Snapshots Repository</name>
+            <url>http://nexus.devel.es/content/repositories/devel-snapshot/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
 </project>
