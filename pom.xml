@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>es.devel.</groupId>
     <artifactId>sms</artifactId>
-    <version>0.7-SNAPSHOT</version>
+    <version>0.7</version>
 
     <packaging>jar</packaging>
 
@@ -21,7 +21,7 @@
         <connection>scm:git:ssh://git@bitbucket.org/frandevel/sms.git</connection>
         <developerConnection>scm:git:ssh://git@bitbucket.org/frandevel/sms.git</developerConnection>
         <url>https://bitbucket.org/frandevel/sms.git</url>
-      <tag>sms-0.6</tag>
+      <tag>sms-0.7</tag>
   </scm>
 
     <build>
