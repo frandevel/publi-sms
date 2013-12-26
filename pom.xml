@@ -18,8 +18,8 @@
     </properties>
 
     <scm>
-        <connection>scm:git:ssh://git@bitbucket.org/frandevel/sms.git</connection>
-        <developerConnection>scm:git:ssh://git@bitbucket.org/frandevel/sms.git</developerConnection>
+        <connection>scm:git:ssh://bitbucket.org/frandevel/sms.git</connection>
+        <developerConnection>scm:git:ssh://bitbucket.org/frandevel/sms.git</developerConnection>
         <url>https://bitbucket.org/frandevel/sms.git</url>
       <tag>sms-0.7</tag>
   </scm>
