@@ -12,7 +12,7 @@ HttpClient based java library to send SMS's and access some service operations t
 
 * Ask for features
 * Find and report bugs
-* Other ‚
+* Donate
 
 ### Who do I talk to? ###
 
