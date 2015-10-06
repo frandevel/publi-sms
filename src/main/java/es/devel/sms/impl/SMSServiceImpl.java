@@ -16,18 +16,19 @@
 
 package es.devel.sms.impl;
 
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
 import es.devel.sms.SmsService;
-import es.devel.sms.exception.InvalidSmsRecipentDataException;
-import es.devel.sms.exception.SMSServiceException;
 import es.devel.sms.exception.SmsGatewayNotConfiguredException;
 import es.devel.sms.model.SMSMessage;
-import es.devel.sms.model.SMSRecipient;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.methods.PostMethod;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,163 +36,148 @@ import java.util.List;
 
 public class SMSServiceImpl implements SmsService {
 
-    public static final String SOURCE_ADDRESS_PARAM_NAME = "SA";
-    private static final String DESTINATION_ADDRESS_PARAM_NAME = "DA";
-    private static final String HTTP_VERSION = "HTTPV3";
-    private static final String MESSAGE_PARAM_NAME = "M";
-    private static final String PASSWORD_PARAM_NAME = "PWD";
-    private static final String ROUTE_DEFAULT_VALUE = "2";
-    private static final String ROUTE_PARAM_NAME = "R";
-    private static final String SMS_GATEWAY_URL = "http://api.gateway360.com/api/push/";
-    private static final String SMS_CREDIT_CHECK_URL = "http://api.gateway360.com/api/others/get_credits.php";
-    private static final String STATUS_NO_CREDITS_LEFT = "OK:-5";
-    private static final String USERNAME_PARAM_NAME = "UN";
-    private static final String VERSION_PARAM_NAME = "V";
-
-    private static final int STATUS_ERROR = 300;
-
     private static final Logger logger = LoggerFactory.getLogger(SMSServiceImpl.class);
-    private static final String STATUS_INVALID_RECIPIENT = "OK:-3";
+
+    private static final String API_BASE_URL = "https://api.gateway360.com/api/3.0";
+    private static final String SEND_URL = "/sms/send";
+    private static final String BALANCE_URL = "/account/get-balance";
 
     private String phonePrefix;
     private String customizedSmsSenderName;
-    private String smsUser;
-    private String smsPassword;
+    private String apiKey;
+
+    public SMSServiceImpl(String apiKey) {
+        this.apiKey = apiKey;
+    }
 
     @Override
-    public void sendSms(Collection<SMSMessage> messagesArg, Collection<SMSRecipient> recipientListArg) throws SmsGatewayNotConfiguredException, SMSServiceException {
+    public void sendSms(Collection<SMSMessage> messages) throws SmsGatewayNotConfiguredException {
         validateSmsGatewayConfiguration();
 
-        if (messagesArg.isEmpty()) {
-            throw new SMSServiceException("No hay mensajes SMS que enviar");
+        if (messages.isEmpty()) {
+            throw new IllegalArgumentException("No hay mensajes SMS que enviar");
         }
-        if (recipientListArg.isEmpty()) {
-            throw new SMSServiceException("No se han especificado destinatarios de los mensajes SMS a enviar");
-        }
+        logger.info("Iniciando envio de mensajes:");
+        logger.info("Custom sender name configured: " + this.customizedSmsSenderName);
+        logger.info("Number of messages to be sent: " + messages.size());
+
+        Client client = Client.create();
+        WebResource webResource = client.resource(API_BASE_URL + SEND_URL);
+
+        ClientResponse response;
+
+        SMSMessage[] messagesAsArray = messages.toArray(new SMSMessage[messages.size()]);
+
+        SmsHolder smsHolder = new SmsHolder(apiKey, messagesAsArray);
         try {
-            logger.info("Iniciando envio de mensajes:");
-            logger.info("Remitente configurado: " + this.customizedSmsSenderName);
-            logger.info("Usuario para envio de SMS's: " + this.smsUser);
-
-            PostMethod post = new PostMethod(SMS_GATEWAY_URL);
-            HttpClient client = new HttpClient();
-
-            logger.info("Numero total de destinatarios: " + recipientListArg.size());
-
-            for (SMSRecipient smsRecipient : recipientListArg) {
-                for (SMSMessage smsMessage : messagesArg) {
-                    post.addParameter(VERSION_PARAM_NAME, HTTP_VERSION);
-                    post.addParameter(USERNAME_PARAM_NAME, smsUser);
-                    post.addParameter(PASSWORD_PARAM_NAME, smsPassword);
-                    post.addParameter(ROUTE_PARAM_NAME, ROUTE_DEFAULT_VALUE);
-
-                    if (customizedSmsSenderName != null && !customizedSmsSenderName.equals("")) {
-                        post.addParameter(SOURCE_ADDRESS_PARAM_NAME, customizedSmsSenderName);
-                    } else {
-                        post.addParameter(SOURCE_ADDRESS_PARAM_NAME, "");
-                    }
-                    post.addParameter(DESTINATION_ADDRESS_PARAM_NAME, "34" + smsRecipient.getMobileNumber());
-                    post.addParameter(MESSAGE_PARAM_NAME, smsMessage.getMessageText());
-
-                    logger.info("Todo listo para enviar el mensaje: " + smsRecipient.getMobileNumber() + " / " + smsRecipient.getName());
-                    logger.info("Texto del mensaje: " + smsMessage.getMessageText());
-                    int status = client.executeMethod(post);
-                    logger.info("Proceso de envío de SMS ejecutado");
-
-                    if (status >= STATUS_ERROR) {
-                        logger.info("Error de envio: " + status);
-                        throw new SMSServiceException("Ha habido problemas con la pasarela SMS");
-                    }
-
-                    String response = post.getResponseBodyAsString();
-                    logger.info("Respuesta del servidor: " + response);
-
-                    if (response.contains("bloqueada")) {
-                        throw new SMSServiceException("La cuenta está bloqueada");
-                    }
-
-                    if (response.contains(STATUS_NO_CREDITS_LEFT)) {
-                        throw new SMSServiceException("La cuenta se ha quedado sin créditos");
-                    }
-
-                    if (response.contains(STATUS_INVALID_RECIPIENT)) {
-                        throw new SMSServiceException("Destinatario inválido: " + smsRecipient.getMobileNumber());
-                    }
-
-                    if (!response.contains("OK")) {
-                        throw new SMSServiceException("Se ha producido un error en el envío del SMS (" + smsRecipient.getMobileNumber() + "): " + response);
-                    }
-                }
-            }
-        } catch (Exception ex) {
-            throw new SMSServiceException(ex);
+            response = webResource.header("Content-Type", "application/json")
+                    .accept(MediaType.APPLICATION_JSON_TYPE)
+                    .post(ClientResponse.class, buildJsonMessage(smsHolder));
+            logger.info("Response from email sending: {}", response);
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not write SMS Message to JSON");
         }
     }
 
-    public void sendSms(String messageText, String... recipientMobileNumbers) throws SMSServiceException, SmsGatewayNotConfiguredException, InvalidSmsRecipentDataException {
+    private String buildJsonMessage(SmsHolder smsHolder) throws IOException {
+        return new ObjectMapper().writeValueAsString(smsHolder);
+    }
+
+    private class SmsHolder {
+
+        @JsonProperty("api_key")
+        private String apiKey;
+        @JsonProperty("report_url")
+        private String reportUrl;
+        private int concat;
+        private int fake;
+        private SMSMessage[] messages;
+
+        public SmsHolder(String apiKey, SMSMessage[] messages) {
+            this.apiKey = apiKey;
+            this.messages = messages;
+            this.concat = 0;
+            this.reportUrl = "";
+            this.fake = 0;
+        }
+
+        public String getApiKey() {
+            return apiKey;
+        }
+
+        public void setApiKey(String apiKey) {
+            this.apiKey = apiKey;
+        }
+
+        public String getReportUrl() {
+            return reportUrl;
+        }
+
+        public void setReportUrl(String reportUrl) {
+            this.reportUrl = reportUrl;
+        }
+
+        public int getConcat() {
+            return concat;
+        }
+
+        public void setConcat(int concat) {
+            this.concat = concat;
+        }
+
+        public SMSMessage[] getMessages() {
+            return messages;
+        }
+
+        public void setMessages(SMSMessage[] messages) {
+            this.messages = messages;
+        }
+    }
+
+    public void sendSms(String messageText, String... recipientMobileNumbers) throws SmsGatewayNotConfiguredException {
 
         validateSmsGatewayConfiguration();
 
         if (recipientMobileNumbers.length == 0) {
-            throw new InvalidSmsRecipentDataException("No se ha especificado ningún destinatario del mensaje SMS");
+            throw new IllegalArgumentException("No se ha especificado ningún destinatario del mensaje SMS");
         }
 
-        if (messageText.equalsIgnoreCase("")) {
-            throw new SMSServiceException("El texto del mensaje está vacío");
+        if ("".equalsIgnoreCase(messageText)) {
+            throw new IllegalArgumentException("El texto del mensaje está vacío");
         }
 
-        SMSMessage message = new SMSMessage(messageText);
-
-        List<SMSMessage> messages = new ArrayList<SMSMessage>(1);
-        List<SMSRecipient> recipients = new ArrayList<SMSRecipient>(1);
-
-        for (String s : recipientMobileNumbers) {
-            SMSRecipient recipient = new SMSRecipient("", s);
-            recipients.add(recipient);
+        List<SMSMessage> messages = new ArrayList<>(1);
+        for (String recipientMobileNumber : recipientMobileNumbers) {
+            messages.add(new SMSMessage(customizedSmsSenderName, phonePrefix + recipientMobileNumber, messageText));
         }
-        messages.add(message);
 
-        sendSms(messages, recipients);
+        sendSms(messages);
     }
 
-    public double checkCredits() throws SmsGatewayNotConfiguredException, SMSServiceException {
+    public double checkCredits() throws SmsGatewayNotConfiguredException {
+        validateSmsGatewayConfiguration();
+
+        Client client = Client.create();
+        WebResource webResource = client.resource(API_BASE_URL + BALANCE_URL);
+        String tokenObject = getTokenAsJson();
+        ClientResponse response = webResource.header("Content-Type", "application/json").post(ClientResponse.class, tokenObject);
+
+        ObjectMapper mapper = new ObjectMapper();
         try {
-            validateSmsGatewayConfiguration();
-
-            PostMethod post = new PostMethod(SMS_CREDIT_CHECK_URL);
-            HttpClient client = new HttpClient();
-
-            post.addParameter(USERNAME_PARAM_NAME, this.smsUser);
-            post.addParameter(PASSWORD_PARAM_NAME, this.smsPassword);
-
-            int status = client.executeMethod(post);
-
-            if (status > STATUS_ERROR) {
-                throw new SMSServiceException("No se ha podido contactar con la pasarela SMS para consultar los créditos");
-            }
-
-            String response = post.getResponseBodyAsString();
-            if (response != null && !response.equals("")) {
-                return Double.valueOf(response);
-            } else {
-                throw new SMSServiceException("Ha ocurrido un error inesperado al consultar los créditos SMS disponibles");
-            }
-        } catch (HttpException ex) {
-            throw new SMSServiceException("Ha habido un error HTTP durante la comprobación de creditos de la cuenta SMS: " + ex.toString());
-        } catch (IOException ex) {
-            throw new SMSServiceException("Ha habido un error E/S durante la comprobación de creditos de la cuenta SMS: " + ex.toString());
+            JsonNode result = mapper.readTree(response.getEntity(String.class));
+            logger.info("SMS Balance: " + result.toString());
+            return result.get("result").get(0).get("balance").asDouble();
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not read JSON data");
         }
     }
 
     private void validateSmsGatewayConfiguration() throws SmsGatewayNotConfiguredException {
-        if (this.smsUser == null || this.smsUser.equals("")) {
-            throw new SmsGatewayNotConfiguredException("No se ha configurado el usuario de la pasarela SMS");
-        }
-        if (this.smsPassword == null || this.smsPassword.equals("")) {
-            throw new SmsGatewayNotConfiguredException("No se ha configurado la clave de la pasarela SMS");
+        if (apiKey == null || "".equals(apiKey)) {
+            throw new SmsGatewayNotConfiguredException("Token has not been provided. Please initialize the bean with a provided API token");
         }
         if (this.phonePrefix == null || this.phonePrefix.equals("")) {
-            throw new SmsGatewayNotConfiguredException("No se ha configurado el prefijo telefonico para el envio de SMS's a través de la pasarela");
+            throw new SmsGatewayNotConfiguredException("Phone prefix has not been configured. Please provide a phone prefix in the format of '+34', according to you country code");
         }
     }
 
@@ -199,20 +185,16 @@ public class SMSServiceImpl implements SmsService {
         this.customizedSmsSenderName = customizedSmsSenderName;
     }
 
-    public String getPhonePrefix() {
-        return phonePrefix;
-    }
-
     public void setPhonePrefix(String phonePrefix) {
         this.phonePrefix = phonePrefix;
     }
 
-    public void setSmsPassword(String smsPassword) {
-        this.smsPassword = smsPassword;
-    }
-
-    public void setSmsUser(String smsUser) {
-        this.smsUser = smsUser;
+    private String getTokenAsJson() {
+        try {
+            return "{\"api_key\":" + new ObjectMapper().writeValueAsString(apiKey) + "}";
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not write to JSON data");
+        }
     }
 
 }

@@ -16,25 +16,64 @@
 
 package es.devel.sms.model;
 
+import org.codehaus.jackson.annotate.JsonProperty;
+
 import java.io.Serializable;
 
-public class SMSMessage extends Object implements Serializable {
+public class SMSMessage implements Serializable {
 
-    private static final long serialVersionUID = -1659659381319540529L;
-    private String messageText;
+    private String from;
+    private String to;
+    private String text;
+    @JsonProperty("send_at")
+    private String sendAt;
 
-    public SMSMessage(String messageText) {
-        this.messageText = messageText;
+    public SMSMessage(String from, String to, String text) {
+        this.from = from;
+        this.to = to;
+        this.text = text;
+        this.sendAt = "";
     }
 
-    public String getMessageText() {
-        return messageText;
+    public String getFrom() {
+        return from;
+    }
+
+    public void setFrom(String from) {
+        this.from = from;
+    }
+
+    public String getTo() {
+        return to;
+    }
+
+    public void setTo(String to) {
+        this.to = to;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public String getSendAt() {
+        return sendAt;
+    }
+
+    public void setSendAt(String sendAt) {
+        this.sendAt = sendAt;
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("SMSMessage{");
-        sb.append("messageText='").append(messageText).append('\'');
+        sb.append("from='").append(from).append('\'');
+        sb.append(", to='").append(to).append('\'');
+        sb.append(", text='").append(text).append('\'');
+        sb.append(", sendAt='").append(sendAt).append('\'');
         sb.append('}');
         return sb.toString();
     }

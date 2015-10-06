@@ -16,19 +16,17 @@
 
 package es.devel.sms;
 
-import es.devel.sms.exception.InvalidSmsRecipentDataException;
-import es.devel.sms.exception.SMSServiceException;
 import es.devel.sms.exception.SmsGatewayNotConfiguredException;
 import es.devel.sms.model.SMSMessage;
-import es.devel.sms.model.SMSRecipient;
+
 import java.util.Collection;
 
 public interface SmsService {
 
-    void sendSms(Collection<SMSMessage> messages, Collection<SMSRecipient> recipients) throws SMSServiceException, SmsGatewayNotConfiguredException;
+    void sendSms(Collection<SMSMessage> messages) throws SmsGatewayNotConfiguredException;
 
-    void sendSms(String message, String... recipient) throws SMSServiceException, SmsGatewayNotConfiguredException, InvalidSmsRecipentDataException;
+    void sendSms(String message, String... recipient) throws SmsGatewayNotConfiguredException;
 
-    double checkCredits() throws SmsGatewayNotConfiguredException, SMSServiceException;
+    double checkCredits() throws SmsGatewayNotConfiguredException;
 
 }
