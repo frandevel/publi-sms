@@ -164,9 +164,10 @@ public class SMSServiceImpl implements SmsService {
 
         ObjectMapper mapper = new ObjectMapper();
         try {
-            JsonNode result = mapper.readTree(response.getEntity(String.class));
-            logger.info("SMS Balance: " + result.toString());
-            return result.get("result").get(0).get("balance").asDouble();
+            JsonNode resultRoot = mapper.readTree(response.getEntity(String.class));
+            Double credits = resultRoot.path("result").path("balance").asDouble();
+            logger.info("SMS Balance: "+ credits + " / Output: " + resultRoot.toString());
+            return credits;
         } catch (IOException e) {
             throw new IllegalStateException("Could not read JSON data");
         }
