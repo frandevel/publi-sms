@@ -4,7 +4,7 @@ Client java library to send SMS's and access some service operations through sms
 
 ### What is this repository for? ###
 
-* Provide the possibility to send sms's from java applications in a very simple 
+* Provide the possibility to send sms's from java applications in a very simple way
 * Check current balance
 
 ### Contribution guidelines ###
@@ -15,4 +15,4 @@ Client java library to send SMS's and access some service operations through sms
 
 ### Who do I talk to? ###
 
-* Francisco Serrano
+* Fran Serrano
